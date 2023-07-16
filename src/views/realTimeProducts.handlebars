@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de productos en tiempo real</title>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+
+        const socket = io();
+        console.log("Conexión WebSocket establecida:", socket);
+
+        function renderProducts(products) {
+            console.log("Renderizando productos:", products);
+
+            const productList = document.getElementById("product-list");
+
+
+            productList.innerHTML = "";
+
+
+            products.forEach((product) => {
+                const productItem = document.createElement("li");
+                productItem.textContent = `${product.title} - ${product.description}`;
+                productList.appendChild(productItem);
+            });
+
+        }
+
+
+        socket.on("newProduct", product => {
+
+            fetch("/api/products")
+                .then((response) => response.json())
+                .then((products) => {
+                    renderProducts(products);
+                })
+                .catch((error) => {
+                    console.error("Error al obtener la lista de productos:", error);
+                });
+        });
+        socket.emit('newProduct', product)
+    </script>
+</head>
+
+<body>
+    <h1>Lista de productos en tiempo real</h1>
+    <ul id="product-list">
+        {{#each products}}
+        <li>{{this.title}} - {{this.description}}</li>
+        {{/each}}
+    </ul>
+</body>
+
+</html>
