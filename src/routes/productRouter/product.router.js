@@ -1,6 +1,7 @@
 import  express  from "express";
 import fs from "fs"
 import {Router} from "express"
+import Product from "../../DAO/models/products.model.js"
 
 
 const productsRouter = express.Router();
@@ -52,25 +53,18 @@ function generateNextId(products) {
 }
 
 
-productsRouter.post('/', (req, res) => {
+
+
+productsRouter.post('/', async (req, res) => {
     const { title, description, code, price, status, stock, category, thumbnails } = req.body;
 
     if (!title || !description || !code || !price || !status || !stock || !category) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
 
-    fs.readFile('productos.json', 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Error al leer los productos.' });
-        }
+    try {
 
-        const products = JSON.parse(data);
-
-        const id = generateNextId(products);
-
-        const newProduct = {
-            id,
+        const newProduct = new Product({
             title,
             description,
             code,
@@ -79,20 +73,47 @@ productsRouter.post('/', (req, res) => {
             stock,
             category,
             thumbnails,
-        };
+        });
 
-        products.push(newProduct);
 
-        fs.writeFile('productos.json', JSON.stringify(products), (err) => {
+        const savedProduct = await newProduct.save();
+
+        fs.readFile('productos.json', 'utf8', (err, data) => {
             if (err) {
                 console.error(err);
-                return res.status(500).json({ error: 'Error al agregar el producto.' });
-            } 
+                return res.status(500).json({ error: 'Error al leer los productos.' });
+            }
 
-            res.status(201).json(newProduct);
+            const products = JSON.parse(data);
+
+
+            products.push({
+                id: newProduct.id,
+                title,
+                description,
+                code,
+                price,
+                status: true,
+                stock,
+                category,
+                thumbnails,
+            });
+
+            fs.writeFile('productos.json', JSON.stringify(products), (err) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Error al agregar el producto.' });
+                } 
+                res.status(201).json(savedProduct);
+            });
         });
-    });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al agregar el producto.' });
+    }
 });
+
+
 
 
 

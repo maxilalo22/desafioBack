@@ -6,6 +6,8 @@ import http from "http";
 import { Server } from "socket.io";
 import productsRouter from "./routes/productRouter/product.router.js";
 import cartsRouter from "./routes/cartRouter/cart.router.js";
+import mongoose from 'mongoose'
+import product from "./DAO/models/products.model.js"
 
 const app = express();
 
@@ -25,7 +27,9 @@ function obtenerProductosDesdeArchivoJSON() {
     return products;
 }
 
-
+app.get("/chat", (req, res) => {
+    res.render("chat");
+});
 
 app.get("/", (req, res) => {
     const products = obtenerProductosDesdeArchivoJSON();
@@ -47,7 +51,7 @@ io.on("connection", (socket) => {
     console.log("Nueva conexión de WebSocket establecida");
     socket.on("newProduct", (product) => {
         console.log("Evento newProduct recibido:", product);
-        io.emit("newProduct", product); 
+        io.emit("newProduct", product);
     });
 });
 
@@ -55,3 +59,17 @@ const PORT = 8080;
 httpServer.listen(PORT, () => {
     console.log(`Servidor HTTP y WebSocket escuchando en el puerto ${PORT}`);
 });
+
+const MONGODB_URL = "mongodb+srv://maxvenditti94:mendoza110@cluster0.zyyalew.mongodb.net";
+mongoose.connect(MONGODB_URL, {
+    dbName: "ecommerce",
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+    .then(() => {
+        console.log("DB connected");
+    })
+    .catch((e) => {
+        console.log("Can't connect to DB");
+    });
+

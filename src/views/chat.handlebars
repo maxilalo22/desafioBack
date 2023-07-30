@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+</head>
+
+<body>
+    <h1>Chat</h1>
+    <div>
+        <ul id="chat-messages">
+            {{#each messages}}
+            <li>{{this.user}}: {{this.message}}</li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div>
+        <input type="text" id="user" placeholder="Nombre de usuario">
+        <input type="text" id="message" placeholder="Escribe tu mensaje">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+
+    <script>
+        const socket = io();
+
+        function renderMessage(message) {
+            const chatMessages = document.getElementById("chat-messages");
+            const messageItem = document.createElement("li");
+            messageItem.textContent = `${message.user}: ${message.message}`;
+            chatMessages.appendChild(messageItem);
+        }
+
+        socket.on("newMessage", (message) => {
+            renderMessage(message);
+        });
+
+        function sendMessage() {
+            const user = document.getElementById("user").value;
+            const message = document.getElementById("message").value;
+            const messageData = { user, message };
+
+            socket.emit("sendMessage", messageData);
+            renderMessage(messageData);
+
+
+            const { user, message } = messageData;
+            const newMessage = new Message({ user, message });
+            await newMessage.save();
+        }
+    </script>
+</body>
+
+</html>
